@@ -37,9 +37,14 @@ VkSurfaceFormatKHR chooseSwapSurfaceFormat(std::span<const VkSurfaceFormatKHR> a
 }
 
 VkExtent2D GetSwapChainExtent(VkSurfaceCapabilitiesKHR& surface_capabilities, VkExtent2D ext) {
-    if (surface_capabilities.currentExtent.width == 0) {
-        auto min = surface_capabilities.minImageExtent;
-        auto max = surface_capabilities.maxImageExtent;
+    auto min = surface_capabilities.minImageExtent;
+    auto max = surface_capabilities.maxImageExtent;
+    auto currExt = surface_capabilities.currentExtent;
+
+    if( currExt.width == 0
+        || currExt.width < min.width || currExt.width > max.width
+        || currExt.height < min.height || currExt.height > max.height
+    ){
         if (ext.width < min.width) {
             ext.width = min.width;
         }
@@ -53,8 +58,8 @@ VkExtent2D GetSwapChainExtent(VkSurfaceCapabilitiesKHR& surface_capabilities, Vk
             ext.height = max.height;
         }
         return ext;
-    }
-
+    }   
+    
     // Most of the cases we define size of the swap_chain images equal to current window's size
     return surface_capabilities.currentExtent;
 }
@@ -106,6 +111,8 @@ bool Swapchain::Create(Device& device, VkSurfaceKHR surface, VkExtent2D extent, 
         image_count = surfaceCapabilities.maxImageCount;
 
     swap.m_extent = GetSwapChainExtent(surfaceCapabilities, extent);
+
+    surfaceCapabilities.currentExtent = swap.m_extent;
 
     swap.m_present_mode                          = VK_PRESENT_MODE_FIFO_KHR;
     VkSurfaceTransformFlagBitsKHR preTransform   = surfaceCapabilities.currentTransform;
